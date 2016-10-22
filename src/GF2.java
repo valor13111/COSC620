@@ -55,6 +55,8 @@ public class GF2 {
             System.out.println(printPolyArray(fx));
             System.out.println(printPolyArray(gx));
 
+            System.out.println(printOpArray(addition(fx, gx)));
+
             // Sort of a debug print to the console to make sure the file was found and ready successfully
             System.out.print("Successful!");
 
@@ -84,7 +86,7 @@ public class GF2 {
      * @param fileLine String
      */
     private void checkCounter(int lineCount, String fileLine) {
-        if (lineCount > 7) {
+        if (lineCount > ROWS_PER_PROBLEM) {
             lineCount = 1;
         }
 
@@ -165,7 +167,7 @@ public class GF2 {
     private void coefficientsFX(String fileLine) {
         String[] x = fileLine.split(SPACE);
 
-        // start at mx[i + 1] because mx[0] is placeholder for degree
+        // start at fx[i + 1] because mx[0] is placeholder for degree
         for (int i = 0; i < x.length; i++) {
             fx[i + 1] = Integer.parseInt(x[i]);
         }
@@ -189,9 +191,111 @@ public class GF2 {
     private void coefficientsGX(String fileLine) {
         String[] x = fileLine.split(SPACE);
 
-        // start at mx[i + 1] because mx[0] is placeholder for degree
+        // start at gx[i + 1] because mx[0] is placeholder for degree
         for (int i = 0; i < x.length; i++) {
             gx[i + 1] = Integer.parseInt(x[i]);
+        }
+    }
+
+    /**
+     * Returns the result array holding the coefficients of f(x) + g(x) in GF(p^n).
+     *
+     * @param fx - polynomial
+     * @param gx - polynomial
+     * @return     result array
+     */
+    private int[] addition(int[] fx, int[] gx) {
+        int[] result;
+
+        if (fx[0] == gx[0]) {
+            result = new int[fx.length - 1];
+            result = addHelper(0, fx, gx, result);
+        } else if (fx[0] > gx[0]) {
+            result = new int[fx.length - 1];
+            result = addHelper(1, fx, gx, result);
+        } else {
+            result = new int[gx.length - 1];
+            result = addHelper(-1, gx, fx, result);
+        }
+
+        checkField(getPrime(), result);
+
+        return result;
+    }
+
+    /**
+     * Returns the result array, handling the logic of the GF(p^n) addition operation.
+     *
+     * @param op        - number indicating -1, 0, 1 if f(x) is > g(x)
+     * @param greater   - greater degree polynomial
+     * @param lesser    - lesser degree polynomial
+     * @param result    - resulting array holding the coefficients
+     * @return          result array
+     */
+    private int[] addHelper(int op, int[] greater, int[] lesser, int[] result) {
+        int difference;
+        int lesserStart;
+
+        switch (op) {
+            case -1:
+                difference = greater[0] - lesser[0];
+                lesserStart = 1;
+
+                for (int i = 0; i < difference; i++) {
+                    result[i] = greater[i + 1];
+                }
+                for (int i = difference; i < greater.length - 1; i++) {
+                    result[i] = greater[i + 1] + lesser[lesserStart++];
+                }
+                break;
+            case 0:
+                for (int i = 0; i < greater.length - 1; i++) {
+                    result[i] = greater[i + 1] + lesser[i + 1];
+                }
+                break;
+            case 1:
+                difference = greater[0] - lesser[0];
+                lesserStart = 1;
+
+                for (int i = 0; i < difference; i++) {
+                    result[i] = greater[i + 1];
+                }
+                for (int i = difference; i < greater.length - 1; i++) {
+                    result[i] = greater[i + 1] + lesser[lesserStart++];
+                }
+                break;
+        }
+
+        return result;
+    }
+
+    /**
+     * Checks the array for each value in it, making sure they are a part of the
+     * finite field.
+     *
+     * @param prime - Zn where n is a positive prime number
+     * @param array - result array to check
+     */
+    private void checkField(int prime, int[] array) {
+        for (int i = 0; i < array.length; i++) {
+            if (!(array[i] >= 0 && array[i] < prime)) {
+                array[i] = mod(array[i], prime);
+            }
+        }
+    }
+
+    /**
+     * Performs mod on two numbers.
+     *
+     * @param a - an integer
+     * @param b - a positive integer
+     * @return  a mod b
+     */
+    public int mod(int a, int b) {
+        if (a >= 0) {
+            return a % b;
+        } else {
+            return a % b + b;
         }
     }
 
@@ -213,6 +317,48 @@ public class GF2 {
         }
 
         return output;
+    }
+
+    /**
+     * Prints contents of polynomial array.
+     *
+     * @param array - polynomial array
+     * @return  String output of array
+     */
+    public String printOpArray(int[] array) {
+        String output = "Result Coefficients:\t";
+
+        if (isZeros(array)) {
+            output += "0";
+        } else {
+            for (int i = 0; i < array.length; i++) {
+                if (!(i == 0 && array[i] == 0)) {
+                    output += array[i] + SPACE;
+                }
+            }
+        }
+
+        return output;
+    }
+
+    /**
+     * Returns boolean true if all values of the array are zero.
+     *
+     * @param array - result array
+     * @return      - boolean
+     */
+    public boolean isZeros(int[] array) {
+        int sum = 0;
+
+        for (int i = 0; i < array.length; i++) {
+            sum += array[i];
+        }
+
+        if (sum == 0) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
 }
