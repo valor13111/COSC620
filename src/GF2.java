@@ -50,12 +50,13 @@ public class GF2 {
                 checkCounter(lineCounter++, fileLine);
             }
 
-            System.out.println(getPrime());
-            System.out.println(printPolyArray(mx));
-            System.out.println(printPolyArray(fx));
-            System.out.println(printPolyArray(gx));
+            System.out.println("Prime  " + getPrime());
+            System.out.println("MX     " + printPolyArray(mx));
+            System.out.println("FX     " + printPolyArray(fx));
+            System.out.println("GX     " + printPolyArray(gx));
 
-            System.out.println(printOpArray(addition(fx, gx)));
+            System.out.println("Addition   : " + printOpArray(addition(fx, gx)));
+            System.out.println("Subtraction: " + printOpArray(subtraction(fx, gx)));
 
             // Sort of a debug print to the console to make sure the file was found and ready successfully
             System.out.print("Successful!");
@@ -207,15 +208,15 @@ public class GF2 {
     private int[] addition(int[] fx, int[] gx) {
         int[] result;
 
-        if (fx[0] == gx[0]) {
-            result = new int[fx.length - 1];
-            result = addHelper(0, fx, gx, result);
-        } else if (fx[0] > gx[0]) {
+        if (isGreater(fx, gx)) {
             result = new int[fx.length - 1];
             result = addHelper(1, fx, gx, result);
-        } else {
+        } else if (!isGreater(fx, gx)) {
             result = new int[gx.length - 1];
             result = addHelper(-1, gx, fx, result);
+        } else {
+            result = new int[fx.length - 1];
+            result = addHelper(0, fx, gx, result);
         }
 
         checkField(getPrime(), result);
@@ -270,6 +271,79 @@ public class GF2 {
     }
 
     /**
+     * Returns the result array holding the coefficients of f(x) - g(x) in GF(p^n).
+     *
+     * @param fx - polynomial
+     * @param gx - polynomial
+     * @return     result array
+     */
+    private int[] subtraction(int[] fx, int[] gx) {
+        int[] result;
+
+        if (isGreater(fx, gx)) {
+            result = new int[fx.length - 1];
+            result = subHelper(1, fx, gx, result);
+        } else if (!isGreater(fx, gx)) {
+            result = new int[gx.length - 1];
+            result = subHelper(-1, gx, fx, result);
+        } else {
+            result = new int[fx.length - 1];
+            result = subHelper(0, fx, gx, result);
+        }
+
+        checkField(getPrime(), result);
+
+        return result;
+    }
+
+    /**
+     * Returns the result array, handling the logic of the GF(p^n) subtraction operation.
+     *
+     * @param op        - number indicating -1, 0, 1 if f(x) is > g(x)
+     * @param a   - greater degree polynomial
+     * @param b    - lesser degree polynomial
+     * @param result    - resulting array holding the coefficients
+     * @return          result array
+     */
+    private int[] subHelper(int op, int[] a, int[] b, int[] result) {
+        int difference;
+        int lesserStart;
+
+        switch (op) {
+            case -1:
+                difference = a[0] - b[0];
+                lesserStart = 1;
+
+                for (int i = 0; i < difference; i++) {
+                    // multiply by -1 since essentialy we are doing 0 - a[i + 1]
+                    result[i] = a[i + 1] * -1;
+                }
+                for (int i = difference; i < a.length - 1; i++) {
+                    result[i] = b[lesserStart++] - a[i + 1];
+                }
+                break;
+            case 0:
+                for (int i = 0; i < a.length - 1; i++) {
+                    result[i] = a[i + 1] - b[i + 1];
+                }
+                break;
+            case 1:
+                difference = a[0] - b[0];
+                lesserStart = 1;
+
+                for (int i = 0; i < difference; i++) {
+                    result[i] = a[i + 1];
+                }
+                for (int i = difference; i < a.length - 1; i++) {
+                    result[i] = a[i + 1] - b[lesserStart++];
+                }
+                break;
+        }
+
+        return result;
+    }
+
+    /**
      * Checks the array for each value in it, making sure they are a part of the
      * finite field.
      *
@@ -296,6 +370,42 @@ public class GF2 {
             return a % b;
         } else {
             return a % b + b;
+        }
+    }
+
+    /**
+     * Returns boolean true if all values of the array are zero.
+     *
+     * @param array - result array
+     * @return      - boolean
+     */
+    public boolean isZeros(int[] array) {
+        int sum = 0;
+
+        for (int i = 0; i < array.length; i++) {
+            sum += array[i];
+        }
+
+        if (sum == 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Returns a boolean value if the first element in a is greater than or equal to the
+     * first element in b.
+     *
+     * @param a - int array
+     * @param b - int array
+     * @return    true or false
+     */
+    public boolean isGreater(int[] a, int[] b) {
+        if (a[0] > b[0]) {
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -339,26 +449,6 @@ public class GF2 {
         }
 
         return output;
-    }
-
-    /**
-     * Returns boolean true if all values of the array are zero.
-     *
-     * @param array - result array
-     * @return      - boolean
-     */
-    public boolean isZeros(int[] array) {
-        int sum = 0;
-
-        for (int i = 0; i < array.length; i++) {
-            sum += array[i];
-        }
-
-        if (sum == 0) {
-            return true;
-        } else {
-            return false;
-        }
     }
 
 }
